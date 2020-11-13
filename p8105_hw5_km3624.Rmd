@@ -8,6 +8,7 @@ output: github_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(rvest)
+library(dplyr)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -90,3 +91,43 @@ results_df %>%
 ```
 
 ## Problem 2
+
+import all the datasets, and tidy them
+
+```{r}
+path_df =
+  tibble(
+    path = list.files("data/problem2_data/")
+  ) %>%
+  mutate(path = str_c("data/problem2_data/", path)) %>%
+  mutate(
+    read_data = map(.x = path, ~read.csv(.x)),
+    path = str_replace(path, "data/problem2_data/", ""),
+    path = str_replace(path, ".csv", ""),
+    subject = path
+  ) %>%
+  select(-path) %>%
+  unnest(read_data) %>%
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    values_to = "observation"
+  ) %>%
+  mutate(
+    week = str_replace(week, "_", "")
+  )
+```
+
+Make a spaghetti plot showing observations on each subject over time
+
+```{r}
+spaghetti_plot =
+  path_df %>%
+  ggplot(aes(x = week, y = observation, color = subject, group = subject)) +
+  geom_line() + geom_point()
+spaghetti_plot
+```
+
+Comment on the difference: The control subjects tend to have lower observations than the experiment subjects across these 8 weeks. For the experiment groups, they tend to increase during these weeks, while for the control groups, they tend to keep a stable fluctuation during these weeks.
+
+## Problem 3
